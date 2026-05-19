@@ -4,89 +4,146 @@
 
 using namespace std;
 
-class Student {
+class BankAccount {
 private:
-    int id;
+    int accountNumber;
     char name[50];
-    float marks;
+    float balance;
 
 public:
-    void input() {
-        cout << "Enter ID: ";
-        cin >> id;
+    void createAccount() {
+        cout << "\nEnter Account Number: ";
+        cin >> accountNumber;
         cin.ignore();
 
-        cout << "Enter Name: ";
+        cout << "Enter Account Holder Name: ";
         cin.getline(name, 50);
 
-        cout << "Enter Marks: ";
-        cin >> marks;
+        cout << "Enter Initial Balance: ";
+        cin >> balance;
     }
 
-    void display() const {
-        cout << "\nID: " << id
-             << "\nName: " << name
-             << "\nMarks: " << marks << endl;
+    void displayAccount() {
+        cout << "\n----- Account Details -----";
+        cout << "\nAccount Number : " << accountNumber;
+        cout << "\nAccount Holder : " << name;
+        cout << "\nBalance        : " << balance;
+        cout << endl;
     }
 
-    int getID() const {
-        return id;
+    int getAccountNumber() {
+        return accountNumber;
     }
 
-    void update() {
-        cin.ignore();
+    void deposit() {
+        float amount;
+        cout << "\nEnter Amount to Deposit: ";
+        cin >> amount;
 
-        cout << "Enter New Name: ";
-        cin.getline(name, 50);
+        balance += amount;
 
-        cout << "Enter New Marks: ";
-        cin >> marks;
+        cout << "Amount Deposited Successfully!";
+    }
+
+    void withdraw() {
+        float amount;
+        cout << "\nEnter Amount to Withdraw: ";
+        cin >> amount;
+
+        if (amount > balance) {
+            cout << "Insufficient Balance!";
+        } else {
+            balance -= amount;
+            cout << "Withdrawal Successful!";
+        }
+    }
+
+    void checkBalance() {
+        cout << "\nCurrent Balance: " << balance << endl;
     }
 };
 
-// Add Student
-void addStudent() {
-    Student s;
+// Function to write account into file
+void writeAccount() {
+    BankAccount acc;
 
-    ofstream file("students.dat", ios::binary | ios::app);
+    ofstream outFile("bank.dat", ios::binary | ios::app);
 
-    s.input();
+    acc.createAccount();
 
-    file.write((char*)&s, sizeof(s));
+    outFile.write((char*)&acc, sizeof(acc));
 
-    file.close();
+    outFile.close();
 
-    cout << "Student added successfully!\n";
+    cout << "\nAccount Created Successfully!\n";
 }
 
-// Display Students
-void displayStudents() {
-    Student s;
+// Function to display all accounts
+void displayAllAccounts() {
+    BankAccount acc;
 
-    ifstream file("students.dat", ios::binary);
+    ifstream inFile("bank.dat", ios::binary);
 
-    while (file.read((char*)&s, sizeof(s))) {
-        s.display();
-        cout << "----------------------\n";
+    if (!inFile) {
+        cout << "\nFile Not Found!";
+        return;
     }
 
-    file.close();
+    while (inFile.read((char*)&acc, sizeof(acc))) {
+        acc.displayAccount();
+    }
+
+    inFile.close();
 }
 
-// Search Student
-void searchStudent() {
-    Student s;
-    int id;
+// Function to search account
+void searchAccount(int accNo) {
+    BankAccount acc;
+
     bool found = false;
 
-    cout << "Enter ID to search: ";
-    cin >> id;
+    fstream file("bank.dat", ios::binary | ios::in | ios::out);
 
-    ifstream file("students.dat", ios::binary);
+    while (file.read((char*)&acc, sizeof(acc))) {
 
-    while (file.read((char*)&s, sizeof(s))) {
-        if (s.getID() == id) {
-            s.display();
+        if (acc.getAccountNumber() == accNo) {
+
+            cout << "\nAccount Found!\n";
+
+            acc.displayAccount();
+
+            int choice;
+
+            cout << "\n1. Deposit";
+            cout << "\n2. Withdraw";
+            cout << "\n3. Check Balance";
+            cout << "\nEnter Choice: ";
+            cin >> choice;
+
+            switch (choice) {
+
+            case 1:
+                acc.deposit();
+
+                file.seekp(-sizeof(acc), ios::cur);
+                file.write((char*)&acc, sizeof(acc));
+                break;
+
+            case 2:
+                acc.withdraw();
+
+                file.seekp(-sizeof(acc), ios::cur);
+                file.write((char*)&acc, sizeof(acc));
+                break;
+
+            case 3:
+                acc.checkBalance();
+                break;
+
+            default:
+                cout << "Invalid Choice!";
+            }
+
             found = true;
             break;
         }
@@ -95,134 +152,50 @@ void searchStudent() {
     file.close();
 
     if (!found) {
-        cout << "Student not found!\n";
+        cout << "\nAccount Not Found!\n";
     }
 }
 
-// Update Student
-void updateStudent() {
-    Student s;
-    int id;
-    bool found = false;
-
-    cout << "Enter ID to update: ";
-    cin >> id;
-
-    fstream file("students.dat", ios::binary | ios::in | ios::out);
-
-    while (file.read((char*)&s, sizeof(s))) {
-
-        if (s.getID() == id) {
-
-            cout << "\nExisting Record:\n";
-            s.display();
-
-            cout << "\nEnter New Details:\n";
-            s.update();
-
-            int pos = -1 * sizeof(s);
-
-            file.seekp(pos, ios::cur);
-
-            file.write((char*)&s, sizeof(s));
-
-            cout << "Record updated successfully!\n";
-
-            found = true;
-            break;
-        }
-    }
-
-    file.close();
-
-    if (!found) {
-        cout << "Student not found!\n";
-    }
-}
-
-// Delete Student
-void deleteStudent() {
-    Student s;
-    int id;
-    bool found = false;
-
-    cout << "Enter ID to delete: ";
-    cin >> id;
-
-    ifstream file("students.dat", ios::binary);
-    ofstream temp("temp.dat", ios::binary);
-
-    while (file.read((char*)&s, sizeof(s))) {
-
-        if (s.getID() != id) {
-            temp.write((char*)&s, sizeof(s));
-        }
-        else {
-            found = true;
-        }
-    }
-
-    file.close();
-    temp.close();
-
-    remove("students.dat");
-    rename("temp.dat", "students.dat");
-
-    if (found)
-        cout << "Student deleted successfully!\n";
-    else
-        cout << "Student not found!\n";
-}
-
-// Main Function
 int main() {
 
-    int choice;
+    int choice, accNo;
 
     do {
-        cout << "\n===== Student Management System =====\n";
 
-        cout << "1. Add Student\n";
-        cout << "2. Display All Students\n";
-        cout << "3. Search Student\n";
-        cout << "4. Update Student\n";
-        cout << "5. Delete Student\n";
-        cout << "6. Exit\n";
-
-        cout << "Enter your choice: ";
+        cout << "\n========== BANK MANAGEMENT SYSTEM ==========";
+        cout << "\n1. Create Account";
+        cout << "\n2. Display All Accounts";
+        cout << "\n3. Search Account";
+        cout << "\n4. Exit";
+        cout << "\nEnter Your Choice: ";
         cin >> choice;
 
         switch (choice) {
 
         case 1:
-            addStudent();
+            writeAccount();
             break;
 
         case 2:
-            displayStudents();
+            displayAllAccounts();
             break;
 
         case 3:
-            searchStudent();
+            cout << "\nEnter Account Number: ";
+            cin >> accNo;
+
+            searchAccount(accNo);
             break;
 
         case 4:
-            updateStudent();
-            break;
-
-        case 5:
-            deleteStudent();
-            break;
-
-        case 6:
-            cout << "Exiting...\n";
+            cout << "\nThank You for Using Bank Management System!";
             break;
 
         default:
-            cout << "Invalid choice!\n";
+            cout << "\nInvalid Choice!";
         }
 
-    } while (choice != 6);
+    } while (choice != 4);
 
     return 0;
 }
