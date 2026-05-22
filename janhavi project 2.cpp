@@ -1,201 +1,214 @@
 #include <iostream>
-#include <fstream>
-#include <cstring>
+#include <vector>
+#include <string>
 
 using namespace std;
 
-class BankAccount {
-private:
-    int accountNumber;
-    char name[50];
-    float balance;
-
+// Book Class
+class Book {
 public:
-    void createAccount() {
-        cout << "\nEnter Account Number: ";
-        cin >> accountNumber;
-        cin.ignore();
+    int id;
+    string title;
+    string author;
+    bool isIssued;
 
-        cout << "Enter Account Holder Name: ";
-        cin.getline(name, 50);
-
-        cout << "Enter Initial Balance: ";
-        cin >> balance;
-    }
-
-    void displayAccount() {
-        cout << "\n----- Account Details -----";
-        cout << "\nAccount Number : " << accountNumber;
-        cout << "\nAccount Holder : " << name;
-        cout << "\nBalance        : " << balance;
-        cout << endl;
-    }
-
-    int getAccountNumber() {
-        return accountNumber;
-    }
-
-    void deposit() {
-        float amount;
-        cout << "\nEnter Amount to Deposit: ";
-        cin >> amount;
-
-        balance += amount;
-
-        cout << "Amount Deposited Successfully!";
-    }
-
-    void withdraw() {
-        float amount;
-        cout << "\nEnter Amount to Withdraw: ";
-        cin >> amount;
-
-        if (amount > balance) {
-            cout << "Insufficient Balance!";
-        } else {
-            balance -= amount;
-            cout << "Withdrawal Successful!";
-        }
-    }
-
-    void checkBalance() {
-        cout << "\nCurrent Balance: " << balance << endl;
+    Book(int i, string t, string a) {
+        id = i;
+        title = t;
+        author = a;
+        isIssued = false;
     }
 };
 
-// Function to write account into file
-void writeAccount() {
-    BankAccount acc;
+// Member Class
+class Member {
+public:
+    int memberId;
+    string name;
 
-    ofstream outFile("bank.dat", ios::binary | ios::app);
+    Member(int id, string n) {
+        memberId = id;
+        name = n;
+    }
+};
 
-    acc.createAccount();
+// Library Class
+class Library {
+private:
+    vector<Book> books;
+    vector<Member> members;
 
-    outFile.write((char*)&acc, sizeof(acc));
+public:
 
-    outFile.close();
-
-    cout << "\nAccount Created Successfully!\n";
-}
-
-// Function to display all accounts
-void displayAllAccounts() {
-    BankAccount acc;
-
-    ifstream inFile("bank.dat", ios::binary);
-
-    if (!inFile) {
-        cout << "\nFile Not Found!";
-        return;
+    // Add Book
+    void addBook(int id, string title, string author) {
+        books.push_back(Book(id, title, author));
+        cout << "Book added successfully!\n";
     }
 
-    while (inFile.read((char*)&acc, sizeof(acc))) {
-        acc.displayAccount();
+    // Add Member
+    void addMember(int id, string name) {
+        members.push_back(Member(id, name));
+        cout << "Member added successfully!\n";
     }
 
-    inFile.close();
-}
-
-// Function to search account
-void searchAccount(int accNo) {
-    BankAccount acc;
-
-    bool found = false;
-
-    fstream file("bank.dat", ios::binary | ios::in | ios::out);
-
-    while (file.read((char*)&acc, sizeof(acc))) {
-
-        if (acc.getAccountNumber() == accNo) {
-
-            cout << "\nAccount Found!\n";
-
-            acc.displayAccount();
-
-            int choice;
-
-            cout << "\n1. Deposit";
-            cout << "\n2. Withdraw";
-            cout << "\n3. Check Balance";
-            cout << "\nEnter Choice: ";
-            cin >> choice;
-
-            switch (choice) {
-
-            case 1:
-                acc.deposit();
-
-                file.seekp(-sizeof(acc), ios::cur);
-                file.write((char*)&acc, sizeof(acc));
-                break;
-
-            case 2:
-                acc.withdraw();
-
-                file.seekp(-sizeof(acc), ios::cur);
-                file.write((char*)&acc, sizeof(acc));
-                break;
-
-            case 3:
-                acc.checkBalance();
-                break;
-
-            default:
-                cout << "Invalid Choice!";
+    // Issue Book
+    void issueBook(int bookId) {
+        for (auto &book : books) {
+            if (book.id == bookId && !book.isIssued) {
+                book.isIssued = true;
+                cout << "Book issued successfully!\n";
+                return;
             }
+        }
 
-            found = true;
-            break;
+        cout << "Book not available.\n";
+    }
+
+    // Return Book
+    void returnBook(int bookId) {
+        for (auto &book : books) {
+            if (book.id == bookId && book.isIssued) {
+                book.isIssued = false;
+                cout << "Book returned successfully!\n";
+                return;
+            }
+        }
+
+        cout << "Invalid return.\n";
+    }
+
+    // Search by Title
+    void searchByTitle(string title) {
+        for (auto &book : books) {
+            if (book.title == title) {
+                cout << "Found: " << book.title
+                     << " by " << book.author << endl;
+                return;
+            }
+        }
+
+        cout << "Book not found.\n";
+    }
+
+    // Search by Author
+    void searchByAuthor(string author) {
+        for (auto &book : books) {
+            if (book.author == author) {
+                cout << "Found: " << book.title << endl;
+            }
         }
     }
 
-    file.close();
-
-    if (!found) {
-        cout << "\nAccount Not Found!\n";
+    // Display Books
+    void displayBooks() {
+        for (auto &book : books) {
+            cout << book.id << " | "
+                 << book.title << " | "
+                 << book.author << " | "
+                 << (book.isIssued ? "Issued" : "Available")
+                 << endl;
+        }
     }
-}
+};
 
+// Main Function
 int main() {
 
-    int choice, accNo;
+    Library lib;
+    int choice;
 
     do {
+        cout << "\n===== LIBRARY MENU =====\n";
+        cout << "1. Add Book\n";
+        cout << "2. Add Member\n";
+        cout << "3. Issue Book\n";
+        cout << "4. Return Book\n";
+        cout << "5. Search by Title\n";
+        cout << "6. Search by Author\n";
+        cout << "7. Display Books\n";
+        cout << "0. Exit\n";
 
-        cout << "\n========== BANK MANAGEMENT SYSTEM ==========";
-        cout << "\n1. Create Account";
-        cout << "\n2. Display All Accounts";
-        cout << "\n3. Search Account";
-        cout << "\n4. Exit";
-        cout << "\nEnter Your Choice: ";
+        cout << "Enter choice: ";
         cin >> choice;
+
+        int id;
+        string title, author, name;
 
         switch (choice) {
 
         case 1:
-            writeAccount();
+            cout << "Enter Book ID: ";
+            cin >> id;
+
+            cin.ignore();
+
+            cout << "Enter Title: ";
+            getline(cin, title);
+
+            cout << "Enter Author: ";
+            getline(cin, author);
+
+            lib.addBook(id, title, author);
             break;
 
         case 2:
-            displayAllAccounts();
+            cout << "Enter Member ID: ";
+            cin >> id;
+
+            cin.ignore();
+
+            cout << "Enter Name: ";
+            getline(cin, name);
+
+            lib.addMember(id, name);
             break;
 
         case 3:
-            cout << "\nEnter Account Number: ";
-            cin >> accNo;
+            cout << "Enter Book ID to issue: ";
+            cin >> id;
 
-            searchAccount(accNo);
+            lib.issueBook(id);
             break;
 
         case 4:
-            cout << "\nThank You for Using Bank Management System!";
+            cout << "Enter Book ID to return: ";
+            cin >> id;
+
+            lib.returnBook(id);
+            break;
+
+        case 5:
+            cin.ignore();
+
+            cout << "Enter Title: ";
+            getline(cin, title);
+
+            lib.searchByTitle(title);
+            break;
+
+        case 6:
+            cin.ignore();
+
+            cout << "Enter Author: ";
+            getline(cin, author);
+
+            lib.searchByAuthor(author);
+            break;
+
+        case 7:
+            lib.displayBooks();
+            break;
+
+        case 0:
+            cout << "Exiting program...\n";
             break;
 
         default:
-            cout << "\nInvalid Choice!";
+            cout << "Invalid choice.\n";
         }
 
-    } while (choice != 4);
+    } while (choice != 0);
 
     return 0;
 }
